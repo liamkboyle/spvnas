@@ -20,7 +20,6 @@ def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
     input_point_cloud[:, 3] = input_point_cloud[:, 3]
     pc_ = np.round(input_point_cloud[:, :3] / voxel_size)
     pc_ -= pc_.min(0, keepdims=1)
-
     label_map = create_label_map()
     if input_labels is not None:
         labels_ = label_map[input_labels & 0xFFFF].astype(
@@ -42,11 +41,6 @@ def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
     _, inds, inverse_map = sparse_quantize(pc_,
                                                 return_index=True,
                                                 return_inverse=True)
-    #inds, labels, inverse_map = sparse_quantize(pc_,
-    #                                            feat_,
-    #                                            labels_,
-    #                                            return_index=True,
-    #                                            return_invs=True)
     pc = np.zeros((inds.shape[0], 4))
     pc[:, :3] = pc_[inds]
 
