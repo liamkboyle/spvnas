@@ -129,11 +129,20 @@ class SemanticKITTIInternal:
 
         self.files = []
         for seq in self.seqs:
+            print(os.getcwd())
+            print(self.root)
+            hacky_path = '/home/lterenzi/Documents/git/spvnas' + '/dataset/semantic-kitti/'+ seq + '/velodyne'
+            print(hacky_path)
             seq_files = sorted(
-                os.listdir(os.path.join(self.root, seq, 'velodyne')))
+                os.listdir(hacky_path))
             seq_files = [
-                os.path.join(self.root, seq, 'velodyne', x) for x in seq_files
+                os.path.join(hacky_path, x) for x in seq_files
             ]
+            #seq_files = sorted(
+            #    os.listdir(os.path.join(self.root, seq, 'velodyne')))
+            #seq_files = [
+            #    os.path.join(self.root, seq, 'velodyne', x) for x in seq_files
+            #]
             self.files.extend(seq_files)
 
         if self.sample_stride > 1:

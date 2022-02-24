@@ -11,7 +11,7 @@ import mayavi.mlab as mlab
 import numpy as np
 import torch
 from torchsparse import SparseTensor
-from torchsparse.utils import sparse_quantize
+from torchsparse.utils.quantize import sparse_quantize
 
 from model_zoo import minkunet, spvcnn, spvnas_specialized
 
@@ -39,11 +39,14 @@ def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
         out_pc = input_point_cloud
         pc_ = pc_
 
-    inds, labels, inverse_map = sparse_quantize(pc_,
-                                                feat_,
-                                                labels_,
+    _, inds, inverse_map = sparse_quantize(pc_,
                                                 return_index=True,
-                                                return_invs=True)
+                                                return_inverse=True)
+    #inds, labels, inverse_map = sparse_quantize(pc_,
+    #                                            feat_,
+    #                                            labels_,
+    #                                            return_index=True,
+    #                                            return_invs=True)
     pc = np.zeros((inds.shape[0], 4))
     pc[:, :3] = pc_[inds]
 
@@ -219,21 +222,30 @@ if __name__ == '__main__':
 
     model = model.to(device)
 
-    input_point_clouds = sorted(os.listdir(args.velodyne_dir))
+    input_point_clouds = sorted(os.listdir(args.velodyne_dir + 'velodyne'))
     for point_cloud_name in input_point_clouds:
+        print("velodyne directory: ", args.velodyne_dir)
+        print("Point cloud name: ", point_cloud_name)
         if not point_cloud_name.endswith('.bin'):
             continue
+        print("Point cloud was found")
         label_file_name = point_cloud_name.replace('.bin', '.label')
+        label_file_name = 'labels/' + point_cloud_name.replace('.bin', '.label')
         vis_file_name = point_cloud_name.replace('.bin', '.png')
         gt_file_name = point_cloud_name.replace('.bin', '_GT.png')
 
-        pc = np.fromfile(f'{args.velodyne_dir}/{point_cloud_name}',
+        pc = np.fromfile(f'{args.velodyne_dir}{"velodyne"}/{point_cloud_name}',
                          dtype=np.float32).reshape(-1, 4)
-        if os.path.exists(label_file_name):
+        print("label file name: ", label_file_name)
+        print("does point cloud path exist: ", os.path.exists(f'{args.velodyne_dir}{"velodyne"}/{point_cloud_name}'))
+        if os.path.exists(f'{args.velodyne_dir}/{label_file_name}'):
+        #if os.path.exists(label_file_name):
+            print("label found")
             label = np.fromfile(f'{args.velodyne_dir}/{label_file_name}',
                                 dtype=np.int32)
         else:
             label = None
+            print("no label found")
         feed_dict = process_point_cloud(pc, label)
         inputs = feed_dict['lidar'].to(device)
         outputs = model(inputs)
