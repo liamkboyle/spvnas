@@ -6,6 +6,7 @@ import torch.backends.cudnn
 import torch.cuda
 import torch.nn
 import torch.utils.data
+import wandb
 from torchpack import distributed as dist
 from torchpack.callbacks import Callbacks, SaverRestore
 from torchpack.environ import auto_set_run_dir, set_run_dir
@@ -18,6 +19,9 @@ from core.callbacks import MeanIoU
 from core.trainers import SemanticKITTITrainer
 from model_zoo import minkunet, spvcnn, spvnas_specialized
 
+use_wandb = True
+if use_wandb:
+    wandb.init(project="my-test-project", entity="liamkboyle")
 
 def main() -> None:
     dist.init()
@@ -33,7 +37,6 @@ def main() -> None:
 
     configs.load(args.config, recursive=True)
     configs.update(opts)
-
     if args.run_dir is None:
         args.run_dir = auto_set_run_dir()
     else:
@@ -66,6 +69,9 @@ def main() -> None:
         model = minkunet(args.name)
     else:
         raise NotImplementedError
+
+    if use_wandb:
+        wandb.watch(model)
 
     model = torch.nn.parallel.DistributedDataParallel(
         model.cuda(),
@@ -105,7 +111,12 @@ def main() -> None:
         inputs = _inputs['lidar']
         targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
         outputs = model(inputs)
-
+        point_cloud = feed_dict["lidar"].coords.cpu().numpy()
+        for idx, output in enumerate(outputs):
+            if(output.argmax().item() > 5):
+                point_cloud[idx, -1] = output.argmax().item() - 5
+            else:
+                point_cloud[idx, -1] = 0
         invs = feed_dict['inverse_map']
         all_labels = feed_dict['targets_mapped']
         _outputs = []
@@ -122,6 +133,8 @@ def main() -> None:
         targets = torch.cat(_targets, 0)
         output_dict = {'outputs': outputs, 'targets': targets}
         trainer.after_step(output_dict)
+        if use_wandb:
+            wandb.log({"point_cloud": wandb.Object3D(point_cloud)})
 
     trainer.after_epoch()
 

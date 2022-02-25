@@ -129,8 +129,6 @@ class SemanticKITTIInternal:
 
         self.files = []
         for seq in self.seqs:
-            print(os.getcwd())
-            print(self.root)
             hacky_path = '/home/lterenzi/Documents/git/spvnas' + '/dataset/semantic-kitti/'+ seq + '/velodyne'
             print(hacky_path)
             seq_files = sorted(
