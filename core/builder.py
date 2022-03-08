@@ -18,6 +18,11 @@ def make_dataset() -> Dataset:
         dataset = SemanticKITTI(root=configs.dataset.root,
                                 num_points=configs.dataset.num_points,
                                 voxel_size=configs.dataset.voxel_size)
+    elif configs.dataset.name == 'rsl_heap':
+        from core.datasets import RslHeap
+        dataset = RslHeap(root=configs.dataset.root,
+                          num_points=configs.dataset.num_points,
+                          voxel_size=configs.dataset.voxel_size)
     else:
         raise NotImplementedError(configs.dataset.name)
     return dataset

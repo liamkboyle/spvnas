@@ -1,5 +1,7 @@
 import argparse
 import sys
+import os
+import os.path
 
 import torch
 import torch.backends.cudnn
@@ -18,6 +20,7 @@ from core import builder
 from core.callbacks import MeanIoU
 from core.trainers import SemanticKITTITrainer
 from model_zoo import minkunet, spvcnn, spvnas_specialized
+from core.rosbag_to_pcl import RosbagToPCLExtractor
 
 use_wandb = True
 if use_wandb:
@@ -44,10 +47,16 @@ def main() -> None:
 
     logger.info(' '.join([sys.executable] + sys.argv))
     logger.info(f'Experiment started: "{args.run_dir}".' + '\n' + f'{configs}')
+    print(os.getcwd())
+    if len(os.listdir(configs.dataset.root)) == 0:
+        print("Directory is empty")
+        # Convert rosbag to .bin files
+        extractor = RosbagToPCLExtractor(configs.dataset.rosbag, configs.dataset.topic)
 
     dataset = builder.make_dataset()
     dataflow = {}
     for split in dataset:
+        print(split, "\n=============\n")
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset[split],
             num_replicas=dist.size(),
@@ -60,7 +69,6 @@ def main() -> None:
             num_workers=configs.workers_per_gpu,
             pin_memory=True,
             collate_fn=dataset[split].collate_fn)
-
     if 'spvnas' in args.name.lower():
         model = spvnas_specialized(args.name)
     elif 'spvcnn' in args.name.lower():
@@ -84,14 +92,14 @@ def main() -> None:
     scheduler = builder.make_scheduler(optimizer)
 
     trainer = SemanticKITTITrainer(model=model,
-                                   criterion=criterion,
-                                   optimizer=optimizer,
-                                   scheduler=scheduler,
-                                   num_workers=configs.workers_per_gpu,
-                                   seed=configs.train.seed)
+                                  criterion=criterion,
+                                  optimizer=optimizer,
+                                  scheduler=scheduler,
+                                  num_workers=configs.workers_per_gpu,
+                                  seed=configs.train.seed)
     callbacks = Callbacks([
-        SaverRestore(),
-        MeanIoU(configs.data.num_classes, configs.data.ignore_label)
+       SaverRestore(),
+       MeanIoU(configs.data.num_classes, configs.data.ignore_label)
     ])
     callbacks._set_trainer(trainer)
     trainer.callbacks = callbacks
@@ -101,6 +109,7 @@ def main() -> None:
     trainer.before_epoch()
 
     model.eval()
+    dataset['test']
 
     for feed_dict in tqdm(dataflow['test'], desc='eval'):
         _inputs = {}
@@ -136,7 +145,8 @@ def main() -> None:
         if use_wandb:
             wandb.log({"point_cloud": wandb.Object3D(point_cloud)})
 
-    trainer.after_epoch()
+    results = trainer.after_epoch()
+    print(results)
 
 
 if __name__ == '__main__':
