@@ -22,7 +22,7 @@ from core.trainers import SemanticKITTITrainer
 from model_zoo import minkunet, spvcnn, spvnas_specialized
 from core.rosbag_to_pcl import RosbagToPCLExtractor
 
-use_wandb = True
+use_wandb = False
 if use_wandb:
     wandb.init(project="my-test-project", entity="liamkboyle")
 
@@ -56,7 +56,6 @@ def main() -> None:
     dataset = builder.make_dataset()
     dataflow = {}
     for split in dataset:
-        print(split, "\n=============\n")
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset[split],
             num_replicas=dist.size(),
@@ -77,7 +76,6 @@ def main() -> None:
         model = minkunet(args.name)
     else:
         raise NotImplementedError
-
     if use_wandb:
         wandb.watch(model)
 
@@ -111,6 +109,7 @@ def main() -> None:
     model.eval()
     dataset['test']
 
+    counter = 0
     for feed_dict in tqdm(dataflow['test'], desc='eval'):
         _inputs = {}
         for key, value in feed_dict.items():
@@ -121,6 +120,7 @@ def main() -> None:
         targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
         outputs = model(inputs)
         point_cloud = feed_dict["lidar"].coords.cpu().numpy()
+        
         for idx, output in enumerate(outputs):
             if(output.argmax().item() > 5):
                 point_cloud[idx, -1] = output.argmax().item() - 5
@@ -142,8 +142,9 @@ def main() -> None:
         targets = torch.cat(_targets, 0)
         output_dict = {'outputs': outputs, 'targets': targets}
         trainer.after_step(output_dict)
-        if use_wandb:
+        if use_wandb and not counter % 10:
             wandb.log({"point_cloud": wandb.Object3D(point_cloud)})
+        counter += 1
 
     results = trainer.after_epoch()
     print(results)

@@ -197,6 +197,7 @@ class SemanticKITTIInternal:
             block[:, :3] = np.dot(block[:, :3], transform_mat)
 
         block[:, 3] = block_[:, 3]
+        print(block[0:3,:])
         pc_ = np.round(block[:, :3] / self.voxel_size).astype(np.int32)
         pc_ -= pc_.min(0, keepdims=1)
 

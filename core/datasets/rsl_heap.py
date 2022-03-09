@@ -3,10 +3,6 @@ import os.path
 from turtle import shape
 
 import numpy as np
-# import rosbag
-# import yaml
-# import sensor_msgs.msg
-# import sensor_msgs.point_cloud2
 from torchsparse import SparseTensor
 from torchsparse.utils.collate import sparse_collate_fn
 from torchsparse.utils.quantize import sparse_quantize
@@ -125,6 +121,7 @@ class RslHeapInternal:
         with open(self.files[index], 'rb') as b:
             block_ = np.fromfile(b, dtype=np.float32).reshape(-1, 4)
         block = np.zeros_like(block_)
+        
 
         theta = self.angle
         transform_mat = np.array([[np.cos(theta),
@@ -132,6 +129,7 @@ class RslHeapInternal:
                                     [-np.sin(theta),
                                     np.cos(theta), 0], [0, 0, 1]])
         block[...] = block_[...]
+        
         block[:, :3] = np.dot(block[:, :3], transform_mat)
         block[:, 3] = block_[:, 3]
         pc_ = np.round(block[:, :3] / self.voxel_size).astype(np.int32)

@@ -36,7 +36,7 @@ class RosbagToPCLExtractor:
             if not index % 10:
                 print("Preprocessing scan " + str(
                     index) + "/" + str(self.num_samples) + " from the point cloud " + self.rosbag_file + ".")
-            if index == 10:
+            if index == 100:
                 break
             scan = self.ros_to_pcl(msg)
             self.scans.append(scan)
@@ -46,7 +46,7 @@ class RosbagToPCLExtractor:
             filename = filename.zfill(8)
             filename_path = rosbag_file.replace('ros/mapping.bag', "bin/" + filename)
             print('saving scan to: ', filename_path)
-            scan.astype('int16').tofile(filename_path)
+            scan.astype('float32').tofile(filename_path)
 
             
         self.scans = np.array(self.scans)
@@ -55,7 +55,8 @@ class RosbagToPCLExtractor:
     def ros_to_pcl(self, ros_cloud):
         points_list = []
         for data in sensor_msgs.point_cloud2.read_points(ros_cloud, skip_nans=True):
-            points_list.append([data[0], data[1], data[2], data[3]])
+            if(data[0] != 0 and data[1] != 0 and data[2] != 0):
+                points_list.append([data[0], data[1], data[2], data[3]])
         points_list = np.asarray(points_list, dtype=np.float32)
 
         return points_list

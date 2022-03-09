@@ -63,11 +63,11 @@ class MeanIoU(Callback):
                                                & (outputs == targets)).item()
             self.total_positive[i] += torch.sum(outputs == i).item()
         accuracies = np.divide(self.total_correct, self.total_seen)
-        for idx, accuracy in enumerate(accuracies):
-            metric = train_label_name_mapping[idx] + ' accuracy'
-            wandb.log({"accuracy": accuracy})
-            # print(metric, accuracy)
-            wandb.log({metric: accuracy})
+        # for idx, accuracy in enumerate(accuracies):
+        #     metric = train_label_name_mapping[idx] + ' accuracy'
+        #     wandb.log({"accuracy": accuracy})
+        #     # print(metric, accuracy)
+        #     wandb.log({metric: accuracy})
 
     def _after_epoch(self) -> dict:
         for i in range(self.num_classes):
