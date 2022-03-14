@@ -9,10 +9,10 @@ train:
 
 dataset:
   name: rsl_heap
-  root: /home/lterenzi/Documents/git/spvnas/dataset/rsl-heap/bin
-  rosbag: /home/lterenzi/Documents/git/spvnas/dataset/rsl-heap/ros/mapping.bag
+  root: dataset/rsl-heap/bin
+  rosbag: dataset/rsl-heap/ros/mapping.bag
   topic: /ouster_points_self_filtered
-  output_dir: /home/lterenzi/Documents/git/spvnas/dataset/rsl-heap/output/
+  output_dir: dataset/rsl-heap/output/
   num_points: 80000
   voxel_size: 0.05
 

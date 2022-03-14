@@ -128,10 +128,8 @@ class SemanticKITTIInternal:
             ]
 
         self.files = []
-        print(split)
         for seq in self.seqs:
             hacky_path = '/home/lterenzi/Documents/git/spvnas' + '/dataset/semantic-kitti/'+ seq + '/velodyne'
-            print(hacky_path)
             seq_files = sorted(
                 os.listdir(hacky_path))
             seq_files = [
@@ -197,7 +195,6 @@ class SemanticKITTIInternal:
             block[:, :3] = np.dot(block[:, :3], transform_mat)
 
         block[:, 3] = block_[:, 3]
-        print(block[0:3,:])
         pc_ = np.round(block[:, :3] / self.voxel_size).astype(np.int32)
         pc_ -= pc_.min(0, keepdims=1)
 

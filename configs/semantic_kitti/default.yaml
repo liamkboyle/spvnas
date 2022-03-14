@@ -9,7 +9,8 @@ train:
 
 dataset:
   name: semantic_kitti
-  root: /home/lterenzi/Documents/git/spvnas/dataset/semantic-kitti
+  root: dataset/semantic-kitti
+  output_dir: dataset/kitti-output/
   num_points: 80000
   voxel_size: 0.05
 
@@ -29,3 +30,6 @@ optimizer:
 
 scheduler:
   name: cosine_warmup
+
+logging:
+  save_data: True
