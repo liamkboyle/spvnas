@@ -1,7 +1,9 @@
 import argparse
+from re import L
 import sys
 import os
 import os.path
+import json
 
 import torch
 import torch.backends.cudnn
@@ -120,8 +122,11 @@ def main() -> None:
         targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
         outputs = model(inputs)
         point_cloud = feed_dict["lidar"].coords.cpu().numpy()
+        plot_point_cloud = point_cloud
+        plot_labels = []
         
         for idx, output in enumerate(outputs):
+            plot_labels.append(output.argmax().item())
             if(output.argmax().item() > 5):
                 point_cloud[idx, -1] = output.argmax().item() - 5
             else:
@@ -142,9 +147,27 @@ def main() -> None:
         targets = torch.cat(_targets, 0)
         output_dict = {'outputs': outputs, 'targets': targets}
         trainer.after_step(output_dict)
+
         if use_wandb and not counter % 10:
             wandb.log({"point_cloud": wandb.Object3D(point_cloud)})
+
+        # Save labelled point cloud every tenth iteration
+        if not counter % 10 and configs.logging.save_data:
+            plot_data = [
+            {
+                'name': 'my_point_cloud',
+                'points': plot_point_cloud[:,0:3].tolist(),
+                'lables': plot_labels
+            }
+            ]
+            filename = str(counter) + ".json"
+            filename = filename.zfill(9)
+            plot_file_path = configs.dataset.output_dir + filename
+            with open(plot_file_path, 'w') as fp:
+                json.dump(plot_data, fp)
         counter += 1
+        # if counter > 0:
+        #     break
 
     results = trainer.after_epoch()
     print(results)

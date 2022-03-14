@@ -36,7 +36,7 @@ class RosbagToPCLExtractor:
             if not index % 10:
                 print("Preprocessing scan " + str(
                     index) + "/" + str(self.num_samples) + " from the point cloud " + self.rosbag_file + ".")
-            if index == 100:
+            if index == 10:
                 break
             scan = self.ros_to_pcl(msg)
             self.scans.append(scan)

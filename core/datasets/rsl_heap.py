@@ -6,7 +6,7 @@ import numpy as np
 from torchsparse import SparseTensor
 from torchsparse.utils.collate import sparse_collate_fn
 from torchsparse.utils.quantize import sparse_quantize
-from core.rosbag_to_pcl import RosbagToPCLExtractor
+# from core.rosbag_to_pcl import RosbagToPCLExtractor
 
 __all__ = ['RslHeap']
 
@@ -52,8 +52,6 @@ kept_labels = [
     'bicycle', 'motorcycle', 'other-vehicle', 'vegetation', 'trunk', 'terrain',
     'person', 'bicyclist', 'motorcyclist', 'fence', 'pole', 'traffic-sign'
 ]
-
-# TODO: write new class to convert point cloud from rosbag
 
 class RslHeap(dict):
 
@@ -116,7 +114,7 @@ class RslHeapInternal:
     def __len__(self):
         return len(self.files)
 
-    def __getitem__(self, index, topic='/ouster_points_self_filtered'):
+    def __getitem__(self, index):
 
         with open(self.files[index], 'rb') as b:
             block_ = np.fromfile(b, dtype=np.float32).reshape(-1, 4)
