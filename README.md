@@ -1,24 +1,10 @@
 # SPVNAS
 
-### [video](https://youtu.be/zzJR07LMXxs) | [paper](https://arxiv.org/abs/2007.16100) | [website](http://spvnas.mit.edu/) [![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mit-han-lab/spvnas/blob/master/tutorial.ipynb)
 
-[Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
-
-[Haotian Tang\*](http://kentang.net/), [Zhijian Liu\*](http://zhijianliu.com/), Shengyu Zhao, Yujun Lin, [Ji Lin](http://linji.me/), [Hanrui Wang](http://hanruiwang.me/), [Song Han](https://songhan.mit.edu/)
-
-ECCV 2020
 
 <img src="https://hanlab.mit.edu/projects/spvnas/figures/spvnas_vs_mink.gif" width="1080">
 
 SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](http://semantic-kitti.org/tasks.html#semseg) (as of July 2020) and outperforms [MinkowskiNet](https://arxiv.org/abs/1904.08755) with **3x speedup, 8x MACs reduction**.
-
-## News
-
-**\[2020-09\]** We release the baseline training code for SPVCNN and MinkowskiNet.
-
-**\[2020-08\]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
-
-**\[2020-07\]** Our paper is accepted to ECCV 2020.
 
 ## Usage
 
@@ -43,11 +29,19 @@ conda create -n torch python=3.7
 conda activate torch
 conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
 conda install numba opencv
+conda install -c conda-forge ros-rospy
 pip install torchpack
 pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git
 ```
 
 ### Data Preparation
+
+#### Heap data
+
+Download your desired rosbag and save it in `/dataset/rsl-heap/rosbags`. Use the script `load_rosbag.py`to extract the point clouds from the rosbag to binary files. Example usage: 
+```bash
+python load_rosbag.py --name rosbags/mapping.bag --topic /ouster_points_self_filtered --output-dir bin/
+```
 
 #### SemanticKITTI
 
@@ -88,21 +82,33 @@ For example, to test the model `SemanticKITTI_val_SPVNAS@65GMACs` on one GPU, yo
 torchpack dist-run -np 1 python evaluate.py configs/semantic_kitti/default.yaml --name SemanticKITTI_val_SPVNAS@65GMACs
 ```
 
+Or, to test the model `SemanticKITTI_val_SPVNAS@35GMACs` on one GPU with heap data, you may run
+
+```bash
+torchpack dist-run -np 1 python evaluate.py configs/rsl_heap.yaml --name SemanticKITTI_val_SPVNAS@35GMACs
+
+```
+
 ### Visualizations
 
-You can run the following command (on a headless server) to visualize the predictions of SPVNAS / SPVCNN / MinkUNet models:
+Because SPVNAS and Open3D-ML are not compatible with the same PyTorch version I recommend creating a second conda environment for plotting the point clouds. The easiest way to do this is to clone the environment you created to run the segmentation and then install the correct PyTorch version along with the other requirements on that second conda environment.
+
 
 ```bash
-xvfb-run --server-args="-screen 0 1024x768x24" python visualize.py
+conda create --name <env_name> --clone torch
+conda activate <env_name>
+conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch-lts
+pip install open3d
 ```
 
-If you are running the code on a computer with monitor, you may also directly run
+Alternatively you can follow the instructions at https://github.com/isl-org/Open3D-ML
+
+To run the visualization you can see an example run command below
 
 ```bash
-python visualize.py
+python dataset/rsl-heap/vis.py --name dataset/rsl-heap/output/0001.json
 ```
-
-The visualizations will be generated in `assets/`.
+<img src="Open3D_example.png" width="1080">
 
 ### Training
 
