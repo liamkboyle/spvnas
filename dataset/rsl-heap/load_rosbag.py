@@ -26,6 +26,7 @@ class RosbagToPCLExtractor:
         info_dict = yaml.load(self.bag._get_yaml_info())
         print("Duration of the bag: " + str(info_dict["duration"]))
         for topic_messages in info_dict["topics"]:
+            print(topic_messages["topic"])
             if topic_messages["topic"] == self.topic:
                 self.num_samples = topic_messages["messages"]
         if self.num_samples > 0:
@@ -80,9 +81,6 @@ def main() -> None:
 
     args, opts = parser.parse_known_args()
 
-
-    rosbag_path = 'dataset/rsl-heap/ros/mapping.bag'
-    topic = '/ouster_points_self_filtered'
     extractor = RosbagToPCLExtractor(args.name, args.topic, args.output_dir)
     extractor.preprocess_rosbag()
 
