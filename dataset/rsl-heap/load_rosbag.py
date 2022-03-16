@@ -3,6 +3,8 @@
 # All rights reserved.
 # This file is released under the "BSD-3-Clause License".
 # Please see the LICENSE file that has been included as part of this package.
+from locale import normalize
+from statistics import mean
 import numpy as np
 import argparse
 import rosbag
@@ -55,7 +57,11 @@ class RosbagToPCLExtractor:
             scan = scan[(scan[:, 0] != 0.0) & (scan[:, 1] != 0.0) & (scan[:, 2] != 0.0)]
             scan_range = np.linalg.norm(scan[:, :3], axis=1)
             scan = scan[scan_range > 0.3]
-            # scan = torch.from_numpy(scan).to(torch.device("cpu")).transpose(0, 1).unsqueeze(0)
+            
+            # Normalize point cloud
+            scan = self.normalize_point_cloud(scan)
+            if index > 0:
+                exit()
 
             # Write each scan to a .bin file
             filename = str(index) + ".bin"
@@ -68,6 +74,32 @@ class RosbagToPCLExtractor:
                 break
 
         self.bag.close()
+
+    def normalize_point_cloud(self, scan):
+        print("Normalizing point cloud...")
+        mean_x = np.mean(scan[:, 0])
+        mean_y = np.mean(scan[:, 1])
+        mean_z = np.mean(scan[:, 2])
+        std_x = np.std(scan[:, 0])
+        std_y = np.std(scan[:, 1])
+        std_z = np.std(scan[:, 2])
+
+        scan[:, 0] = scan[:, 0] - mean_x
+        scan[:, 1] = scan[:, 1] - mean_y
+        scan[:, 2] = scan[:, 2] - mean_z
+        scan[:, 0] = scan[:, 0] / std_x
+        scan[:, 1] = scan[:, 1] / std_y
+        scan[:, 2] = scan[:, 2] / std_z
+
+        
+        # print("mean x: ", np.mean(scan[:, 0]))
+        # print("std x: ", np.std(scan[:, 0]))
+        # print("mean y: ", np.mean(scan[:, 1]))
+        # print("std y: ", np.std(scan[:, 1]))
+        # print("mean z: ", np.mean(scan[:, 2]))
+        # print("std z: ", np.std(scan[:, 2]))
+
+        return scan
 
 
 def main() -> None:
